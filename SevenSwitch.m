@@ -156,8 +156,8 @@
     
     // kob image
     thumbImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, knob.frame.size.width, knob.frame.size.height)];
-    thumbImageView.contentMode = UIViewContentModeCenter;
-    thumbImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    thumbImageView.contentMode = UIViewContentModeScaleAspectFit;
+    thumbImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [knob addSubview:thumbImageView];
 
     isAnimating = NO;
