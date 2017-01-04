@@ -36,6 +36,7 @@
     BOOL didChangeWhileTracking;
     BOOL isAnimating;
     BOOL userDidSpecifyOnThumbTintColor;
+    BOOL userDidSpecifyOnThumbImage;
 }
 
 - (void)showOn:(BOOL)animated;
@@ -48,7 +49,7 @@
 @implementation SevenSwitch
 
 @synthesize inactiveColor, activeColor, onTintColor, borderColor, thumbTintColor, onThumbTintColor, shadowColor;
-@synthesize onImage, offImage, thumbImage;
+@synthesize onImage, offImage, thumbImage, onThumbImage;
 @synthesize isRounded;
 @synthesize on;
 
@@ -95,6 +96,7 @@
 - (void)setup {
 
     // default values
+    self.direction = SevenSwitchDirection_Horizontal;
     self.on = NO;
     self.isRounded = YES;
     self.inactiveColor = [UIColor clearColor];
@@ -106,6 +108,7 @@
     self.shadowColor = [UIColor grayColor];
     currentVisualValue = NO;
     userDidSpecifyOnThumbTintColor = NO;
+    userDidSpecifyOnThumbImage = NO;
 
     // background
     background = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
@@ -173,18 +176,31 @@
     didChangeWhileTracking = NO;
 
     // make the knob larger and animate to the correct color
-    CGFloat activeKnobWidth = self.bounds.size.height - 2 + 5;
+    CGFloat activeKnobStretchSide;
+    if (self.isHorizontal)
+        activeKnobStretchSide = self.bounds.size.height - 2 + 5;
+    else
+        activeKnobStretchSide = self.bounds.size.width - 2 + 5;
+    
     isAnimating = YES;
     [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut|UIViewAnimationOptionBeginFromCurrentState animations:^{
         if (self.on) {
-            knob.frame = CGRectMake(self.bounds.size.width - (activeKnobWidth + 1), knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(self.bounds.size.width - (activeKnobStretchSide + 1), knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, knob.frame.origin.y, knob.frame.size.width, activeKnobStretchSide);
             background.backgroundColor = self.onTintColor;
             knob.backgroundColor = self.onThumbTintColor;
+            thumbImageView.image = self.onThumbImage;
         }
         else {
-            knob.frame = CGRectMake(knob.frame.origin.x, knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(knob.frame.origin.x, knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (activeKnobStretchSide + 1), knob.frame.size.width, activeKnobStretchSide);
             background.backgroundColor = self.activeColor;
             knob.backgroundColor = self.thumbTintColor;
+            thumbImageView.image = self.thumbImage;
         }
     } completion:^(BOOL finished) {
         isAnimating = NO;
@@ -201,16 +217,34 @@
 
     // update the switch to the correct visuals depending on if
     // they moved their touch to the right or left side of the switch
-    if (lastPoint.x > self.bounds.size.width * 0.5) {
-        [self showOn:YES];
-        if (!startTrackingValue) {
-            didChangeWhileTracking = YES;
+    if (self.isHorizontal)
+    {
+        if (lastPoint.x > self.bounds.size.width * 0.5) {
+            [self showOn:YES];
+            if (!startTrackingValue) {
+                didChangeWhileTracking = YES;
+            }
+        }
+        else {
+            [self showOff:YES];
+            if (startTrackingValue) {
+                didChangeWhileTracking = YES;
+            }
         }
     }
-    else {
-        [self showOff:YES];
-        if (startTrackingValue) {
-            didChangeWhileTracking = YES;
+    else
+    {
+        if (lastPoint.y < self.bounds.size.height * 0.5) {
+            [self showOn:YES];
+            if (!startTrackingValue) {
+                didChangeWhileTracking = YES;
+            }
+        }
+        else {
+            [self showOff:YES];
+            if (startTrackingValue) {
+                didChangeWhileTracking = YES;
+            }
         }
     }
 
@@ -252,22 +286,49 @@
 
         // background
         background.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-        background.layer.cornerRadius = self.isRounded ? frame.size.height * 0.5 : 2;
-
-        // images
-        onImageView.frame = CGRectMake(0, 0, frame.size.width - frame.size.height, frame.size.height);
-        offImageView.frame = CGRectMake(frame.size.height, 0, frame.size.width - frame.size.height, frame.size.height);
-		self.onLabel.frame = CGRectMake(0, 0, frame.size.width - frame.size.height, frame.size.height);
-		self.offLabel.frame = CGRectMake(frame.size.height, 0, frame.size.width - frame.size.height, frame.size.height);
-		
-        // knob
-        CGFloat normalKnobWidth = frame.size.height - 2;
-        if (self.on)
-            knob.frame = CGRectMake(frame.size.width - (normalKnobWidth + 1), 1, frame.size.height - 2, normalKnobWidth);
+        if (self.isHorizontal)
+            background.layer.cornerRadius = self.isRounded ? frame.size.height * 0.5 : 2;
         else
-            knob.frame = CGRectMake(1, 1, normalKnobWidth, normalKnobWidth);
-
-        knob.layer.cornerRadius = self.isRounded ? (frame.size.height * 0.5) - 1 : 2;
+            background.layer.cornerRadius = self.isRounded ? frame.size.width * 0.5 : 2;
+        
+        // images
+        if (self.isHorizontal)
+            [onImageView setFrame:CGRectMake(0, 0, frame.size.width - frame.size.height, frame.size.height)];
+        else
+            [onImageView setFrame:CGRectMake(0, frame.size.width, frame.size.width, frame.size.height - frame.size.width)];
+        
+        if (self.isHorizontal)
+            [offImageView setFrame:CGRectMake(frame.size.height, 0, frame.size.width - frame.size.height, frame.size.height)];
+        else
+            [offImageView setFrame:CGRectMake(0, 0, frame.size.width, frame.size.height - frame.size.width)];
+        
+        // labels
+        if (self.isHorizontal)
+            [self.onLabel setFrame:CGRectMake(0, 0, frame.size.width - frame.size.height, frame.size.height)];
+        else
+            [self.onLabel setFrame:CGRectMake(0, frame.size.width, frame.size.width, frame.size.height - frame.size.width)];
+        
+        if (self.isHorizontal)
+            [self.offLabel setFrame:CGRectMake(frame.size.height, 0, frame.size.width - frame.size.height, frame.size.height)];
+        else
+            [self.offLabel setFrame:CGRectMake(0, 0, frame.size.width, frame.size.height - frame.size.width)];
+       
+        if (self.isHorizontal)
+        {
+            if (self.on)
+                [knob setFrame:CGRectMake(frame.size.width - (frame.size.height - 1), 1, frame.size.height - 2, frame.size.height - 2)];
+            else
+                [knob setFrame:CGRectMake(1, 1, frame.size.height - 2, frame.size.height - 2)];
+            knob.layer.cornerRadius = self.isRounded ? (frame.size.height * 0.5) - 1 : 2;
+        }
+        else
+        {
+            if (self.on)
+                [knob setFrame:CGRectMake(1, 1, frame.size.width - 2, frame.size.width - 2)];
+            else
+                [knob setFrame:CGRectMake(1, frame.size.height - (frame.size.width - 1), frame.size.width - 2, frame.size.width - 2)];
+            knob.layer.cornerRadius = self.isRounded ? (frame.size.width * 0.5) - 1 : 2;
+        }
     }
 }
 
@@ -340,7 +401,18 @@
 - (void)setThumbImage:(UIImage *)image
 {
     thumbImage = image;
-    thumbImageView.image = image;
+    if (!userDidSpecifyOnThumbImage)
+        onThumbImage = image;
+    if ((!userDidSpecifyOnThumbImage || !self.on) && !self.isTracking)
+        thumbImageView.image = image;
+}
+
+- (void)setOnThumbImage:(UIImage *)image
+{
+    onThumbImage = image;
+    userDidSpecifyOnThumbImage = YES;
+    if (self.on && !self.isTracking)
+        thumbImageView.image = image;
 }
 
 /*
@@ -373,8 +445,15 @@
     isRounded = rounded;
 
     if (rounded) {
-        background.layer.cornerRadius = self.frame.size.height * 0.5;
-        knob.layer.cornerRadius = (self.frame.size.height * 0.5) - 1;
+        if (self.isHorizontal)
+            background.layer.cornerRadius = self.frame.size.height * 0.5;
+        else
+            background.layer.cornerRadius = self.frame.size.width * 0.5;
+
+        if (self.isHorizontal)
+            knob.layer.cornerRadius = self.frame.size.height * 0.5 - 1;
+        else
+            knob.layer.cornerRadius = self.frame.size.width * 0.5 - 1;
     }
     else {
         background.layer.cornerRadius = 2;
@@ -428,18 +507,33 @@
  * optionally make it animated
  */
 - (void)showOn:(BOOL)animated {
-    CGFloat normalKnobWidth = self.bounds.size.height - 2;
-    CGFloat activeKnobWidth = normalKnobWidth + 5;
+    CGFloat normalKnobStretchSide;
+    if (self.isHorizontal)
+        normalKnobStretchSide = self.bounds.size.height - 2;
+    else
+        normalKnobStretchSide = self.bounds.size.width - 2;
+    CGFloat activeKnobStretchSide = normalKnobStretchSide + 5;
     if (animated) {
         isAnimating = YES;
         [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut|UIViewAnimationOptionBeginFromCurrentState animations:^{
             if (self.tracking)
-                knob.frame = CGRectMake(self.bounds.size.width - (activeKnobWidth + 1), knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+            {
+                if (self.isHorizontal)
+                    knob.frame = CGRectMake(self.bounds.size.width - (activeKnobStretchSide + 1), knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+                else
+                    knob.frame = CGRectMake(knob.frame.origin.x, 1, knob.frame.size.width, activeKnobStretchSide);
+            }
             else
-                knob.frame = CGRectMake(self.bounds.size.width - (normalKnobWidth + 1), knob.frame.origin.y, normalKnobWidth, knob.frame.size.height);
+            {
+                if (self.isHorizontal)
+                    knob.frame = CGRectMake(self.bounds.size.width - (normalKnobStretchSide + 1), knob.frame.origin.y, normalKnobStretchSide, knob.frame.size.height);
+                else
+                    knob.frame = CGRectMake(knob.frame.origin.x, 1, knob.frame.size.width, normalKnobStretchSide);
+            }
             background.backgroundColor = self.onTintColor;
             background.layer.borderColor = self.onTintColor.CGColor;
             knob.backgroundColor = self.onThumbTintColor;
+            thumbImageView.image = self.onThumbImage;
             onImageView.alpha = 1.0;
             offImageView.alpha = 0;
 			self.onLabel.alpha = 1.0;
@@ -450,12 +544,23 @@
     }
     else {
         if (self.tracking)
-            knob.frame = CGRectMake(self.bounds.size.width - (activeKnobWidth + 1), knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+        {
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(self.bounds.size.width - (activeKnobStretchSide + 1), knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, 1, knob.frame.size.width, activeKnobStretchSide);
+        }
         else
-            knob.frame = CGRectMake(self.bounds.size.width - (normalKnobWidth + 1), knob.frame.origin.y, normalKnobWidth, knob.frame.size.height);
+        {
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(self.bounds.size.width - (normalKnobStretchSide + 1), knob.frame.origin.y, normalKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, 1, knob.frame.size.width, normalKnobStretchSide);
+        }
         background.backgroundColor = self.onTintColor;
         background.layer.borderColor = self.onTintColor.CGColor;
         knob.backgroundColor = self.onThumbTintColor;
+        thumbImageView.image = self.onThumbImage;
         onImageView.alpha = 1.0;
         offImageView.alpha = 0;
 		self.onLabel.alpha = 1.0;
@@ -471,21 +576,32 @@
  * optionally make it animated
  */
 - (void)showOff:(BOOL)animated {
-    CGFloat normalKnobWidth = self.bounds.size.height - 2;
-    CGFloat activeKnobWidth = normalKnobWidth + 5;
+    CGFloat normalKnobStretchSide;
+    if (self.isHorizontal)
+        normalKnobStretchSide = self.bounds.size.height - 2;
+    else
+        normalKnobStretchSide = self.bounds.size.width - 2;
+    CGFloat activeKnobStretchSide = normalKnobStretchSide + 5;
     if (animated) {
         isAnimating = YES;
         [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut|UIViewAnimationOptionBeginFromCurrentState animations:^{
             if (self.tracking) {
-                knob.frame = CGRectMake(1, knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+                if (self.isHorizontal)
+                    knob.frame = CGRectMake(1, knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+                else
+                    knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (activeKnobStretchSide + 1), knob.frame.size.width, activeKnobStretchSide);
                 background.backgroundColor = self.activeColor;
             }
             else {
-                knob.frame = CGRectMake(1, knob.frame.origin.y, normalKnobWidth, knob.frame.size.height);
+                if (self.isHorizontal)
+                    knob.frame = CGRectMake(1, knob.frame.origin.y, normalKnobStretchSide, knob.frame.size.height);
+                else
+                    knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (normalKnobStretchSide + 1), knob.frame.size.width, normalKnobStretchSide);
                 background.backgroundColor = self.inactiveColor;
             }
             background.layer.borderColor = self.borderColor.CGColor;
             knob.backgroundColor = self.thumbTintColor;
+            thumbImageView.image = self.thumbImage;
             onImageView.alpha = 0;
             offImageView.alpha = 1.0;
 			self.onLabel.alpha = 0;
@@ -496,15 +612,22 @@
     }
     else {
         if (self.tracking) {
-            knob.frame = CGRectMake(1, knob.frame.origin.y, activeKnobWidth, knob.frame.size.height);
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(1, knob.frame.origin.y, activeKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (activeKnobStretchSide + 1), knob.frame.size.width, activeKnobStretchSide);
             background.backgroundColor = self.activeColor;
         }
         else {
-            knob.frame = CGRectMake(1, knob.frame.origin.y, normalKnobWidth, knob.frame.size.height);
+            if (self.isHorizontal)
+                knob.frame = CGRectMake(1, knob.frame.origin.y, normalKnobStretchSide, knob.frame.size.height);
+            else
+                knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (normalKnobStretchSide + 1), knob.frame.size.width, normalKnobStretchSide);
             background.backgroundColor = self.inactiveColor;
         }
         background.layer.borderColor = self.borderColor.CGColor;
         knob.backgroundColor = self.thumbTintColor;
+        thumbImageView.image = self.thumbImage;
         onImageView.alpha = 0;
         offImageView.alpha = 1.0;
 		self.onLabel.alpha = 0;
@@ -528,6 +651,78 @@
 
 - (void)setKnobColor:(UIColor *)color {
     self.thumbTintColor = color;
+}
+
+- (void)setDirection:(SevenSwitchDirection)direction
+{
+    if (direction != _direction)
+    {
+        _direction = direction;
+        [self adjustSwitch];
+    }
+}
+
+- (BOOL)isHorizontal
+{
+    return self.direction == SevenSwitchDirection_Horizontal;
+}
+
+- (void)adjustSwitch
+{
+    // background
+    [background setFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
+    
+    if (self.isHorizontal)
+        background.layer.cornerRadius = self.isRounded ? self.frame.size.height * 0.5 : 2;
+    else
+        background.layer.cornerRadius = self.isRounded ? self.frame.size.width * 0.5 : 2;
+    
+    // on/off images
+    if (self.isHorizontal)
+        [onImageView setFrame:CGRectMake(0, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    else
+        [onImageView setFrame:CGRectMake(0, self.frame.size.width, self.frame.size.width, self.frame.size.height - self.frame.size.width)];
+    
+    if (self.isHorizontal)
+        [offImageView setFrame:CGRectMake(self.frame.size.height, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    else
+        [offImageView setFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height - self.frame.size.width)];
+    
+    // labels
+    if (self.isHorizontal)
+        [self.onLabel setFrame:CGRectMake(0, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    else
+        [self.onLabel setFrame:CGRectMake(0, self.frame.size.width, self.frame.size.width, self.frame.size.height - self.frame.size.width)];
+    
+    if (self.isHorizontal)
+        [self.offLabel setFrame:CGRectMake(self.frame.size.height, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    else
+        [self.offLabel setFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height - self.frame.size.width)];
+    
+    // knob
+    if (self.isHorizontal)
+    {
+        if (self.on)
+            [knob setFrame:CGRectMake(self.frame.size.width - (self.frame.size.height - 1), 1, self.frame.size.height - 2, self.frame.size.height - 2)];
+        else
+            [knob setFrame:CGRectMake(1, 1, self.frame.size.height - 2, self.frame.size.height - 2)];
+        knob.layer.cornerRadius = self.isRounded ? (self.frame.size.height * 0.5) - 1 : 2;
+        knob.layer.shadowOffset = CGSizeMake(0, 3);
+        knob.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:knob.bounds cornerRadius:knob.layer.cornerRadius].CGPath;
+    }
+    else
+    {
+        if (self.on)
+            [knob setFrame:CGRectMake(1, 1, self.frame.size.width - 2, self.frame.size.width - 2)];
+        else
+            [knob setFrame:CGRectMake(1, self.frame.size.height - (self.frame.size.width - 1), self.frame.size.width - 2, self.frame.size.width - 2)];
+        knob.layer.cornerRadius = self.isRounded ? (self.frame.size.width * 0.5) - 1 : 2;
+        knob.layer.shadowOffset = CGSizeMake(0, 3);
+        knob.layer.shadowPath = [UIBezierPath bezierPathWithRoundedRect:knob.bounds cornerRadius:knob.layer.cornerRadius].CGPath;
+    }
+    
+    // knob image
+    [thumbImageView setFrame:CGRectMake(0, 0, knob.frame.size.width, knob.frame.size.height)];
 }
 
 @end

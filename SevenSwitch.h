@@ -24,6 +24,12 @@
 
 #import <UIKit/UIKit.h>
 
+typedef NS_ENUM(NSInteger, SevenSwitchDirection)
+{
+    SevenSwitchDirection_Horizontal,
+    SevenSwitchDirection_Vertical
+};
+
 @interface SevenSwitch : UIControl
 
 /*
@@ -31,6 +37,10 @@
  */
 @property (nonatomic, assign) BOOL on;
 
+/*
+ * Set the direction of switch, it is horizontal by default
+ */
+@property (nonatomic, assign) SevenSwitchDirection direction;
 
 /*
  *	Sets the background color when the switch is off.
@@ -81,6 +91,7 @@
  *  Sets the image that shows on the switch thumb.
  */
 @property (nonatomic, strong) UIImage *thumbImage;
+@property (nonatomic, strong) UIImage *onThumbImage;
 
 
 /*
