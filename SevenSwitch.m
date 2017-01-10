@@ -50,6 +50,7 @@
 
 @synthesize inactiveColor, activeColor, onTintColor, borderColor, thumbTintColor, onThumbTintColor, shadowColor;
 @synthesize onImage, offImage, thumbImage, onThumbImage;
+@synthesize offThumbImageView, onThumbImageView;
 @synthesize isRounded;
 @synthesize on;
 
@@ -157,7 +158,7 @@
     knob.userInteractionEnabled = NO;
     [self addSubview:knob];
     
-    // kob image
+    // knob image
     thumbImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, knob.frame.size.width, knob.frame.size.height)];
     thumbImageView.contentMode = UIViewContentModeScaleAspectFit;
     thumbImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -191,7 +192,13 @@
                 knob.frame = CGRectMake(knob.frame.origin.x, knob.frame.origin.y, knob.frame.size.width, activeKnobStretchSide);
             background.backgroundColor = self.onTintColor;
             knob.backgroundColor = self.onThumbTintColor;
-            thumbImageView.image = self.onThumbImage;
+            if (self.onThumbImageView)
+            {
+                self.onThumbImageView.hidden  = NO;
+                self.offThumbImageView.hidden = YES;
+            }
+            else
+                thumbImageView.image = self.onThumbImage;
         }
         else {
             if (self.isHorizontal)
@@ -200,7 +207,13 @@
                 knob.frame = CGRectMake(knob.frame.origin.x, self.bounds.size.height - (activeKnobStretchSide + 1), knob.frame.size.width, activeKnobStretchSide);
             background.backgroundColor = self.activeColor;
             knob.backgroundColor = self.thumbTintColor;
-            thumbImageView.image = self.thumbImage;
+            if (self.onThumbImageView)
+            {
+                self.onThumbImageView.hidden  = YES;
+                self.offThumbImageView.hidden = NO;
+            }
+            else
+                thumbImageView.image = self.thumbImage;
         }
     } completion:^(BOOL finished) {
         isAnimating = NO;
@@ -403,7 +416,7 @@
     thumbImage = image;
     if (!userDidSpecifyOnThumbImage)
         onThumbImage = image;
-    if ((!userDidSpecifyOnThumbImage || !self.on) && !self.isTracking)
+    if ((!userDidSpecifyOnThumbImage || !self.on) && !self.isTracking && !self.onThumbImageView)
         thumbImageView.image = image;
 }
 
@@ -411,8 +424,62 @@
 {
     onThumbImage = image;
     userDidSpecifyOnThumbImage = YES;
-    if (self.on && !self.isTracking)
+    if (self.on && !self.isTracking && !self.onThumbImageView)
         thumbImageView.image = image;
+}
+
+/*
+ *	Sets the thumb imageview.
+ */
+- (void)setOffThumbImageView:(UIImageView *)imageView
+{
+    [imageView setFrame:CGRectMake(0, 0, knob.frame.size.width, knob.frame.size.height)];
+    imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    
+    if (onThumbImageView == nil)
+    {
+        onThumbImageView = [[UIImageView alloc] initWithFrame:imageView.frame];
+        onImageView.autoresizingMask = imageView.autoresizingMask;
+        onThumbImageView.image = imageView.image;
+        [thumbImageView addSubview:onThumbImageView];
+    }
+    if (offThumbImageView)
+    {
+        [offThumbImageView removeFromSuperview];
+    }
+    offThumbImageView = imageView;
+    [thumbImageView addSubview:offThumbImageView];
+    if (!self.isTracking)
+    {
+        onThumbImageView.hidden = !self.on;
+        offThumbImageView.hidden = self.on;
+    }
+    thumbImageView.image = nil;
+}
+
+- (void)setOnThumbImageView:(UIImageView *)imageView
+{
+    [imageView setFrame:CGRectMake(0, 0, knob.frame.size.width, knob.frame.size.height)];
+    imageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    if (offThumbImageView == nil)
+    {
+        offThumbImageView = [[UIImageView alloc] initWithFrame:imageView.frame];
+        offImageView.autoresizingMask = imageView.autoresizingMask;
+        offThumbImageView.image = imageView.image;
+        [thumbImageView addSubview:offThumbImageView];
+    }
+    if (onThumbImageView)
+    {
+        [onThumbImageView removeFromSuperview];
+    }
+    onThumbImageView = imageView;
+    [thumbImageView addSubview:onThumbImageView];
+    if (!self.isTracking)
+    {
+        onThumbImageView.hidden = !self.on;
+        offThumbImageView.hidden = self.on;
+    }
+    thumbImageView.image = nil;
 }
 
 /*
@@ -533,7 +600,13 @@
             background.backgroundColor = self.onTintColor;
             background.layer.borderColor = self.onTintColor.CGColor;
             knob.backgroundColor = self.onThumbTintColor;
-            thumbImageView.image = self.onThumbImage;
+            if (self.onThumbImageView)
+            {
+                self.onThumbImageView.hidden  = NO;
+                self.offThumbImageView.hidden = YES;
+            }
+            else
+                thumbImageView.image = self.onThumbImage;
             onImageView.alpha = 1.0;
             offImageView.alpha = 0;
 			self.onLabel.alpha = 1.0;
@@ -560,7 +633,13 @@
         background.backgroundColor = self.onTintColor;
         background.layer.borderColor = self.onTintColor.CGColor;
         knob.backgroundColor = self.onThumbTintColor;
-        thumbImageView.image = self.onThumbImage;
+        if (self.onThumbImageView)
+        {
+            self.onThumbImageView.hidden  = NO;
+            self.offThumbImageView.hidden = YES;
+        }
+        else
+            thumbImageView.image = self.onThumbImage;
         onImageView.alpha = 1.0;
         offImageView.alpha = 0;
 		self.onLabel.alpha = 1.0;
@@ -601,7 +680,13 @@
             }
             background.layer.borderColor = self.borderColor.CGColor;
             knob.backgroundColor = self.thumbTintColor;
-            thumbImageView.image = self.thumbImage;
+            if (self.onThumbImageView)
+            {
+                self.onThumbImageView.hidden  = YES;
+                self.offThumbImageView.hidden = NO;
+            }
+            else
+                thumbImageView.image = self.thumbImage;
             onImageView.alpha = 0;
             offImageView.alpha = 1.0;
 			self.onLabel.alpha = 0;
@@ -627,7 +712,13 @@
         }
         background.layer.borderColor = self.borderColor.CGColor;
         knob.backgroundColor = self.thumbTintColor;
-        thumbImageView.image = self.thumbImage;
+        if (self.onThumbImageView)
+        {
+            self.onThumbImageView.hidden  = YES;
+            self.offThumbImageView.hidden = NO;
+        }
+        else
+            thumbImageView.image = self.thumbImage;
         onImageView.alpha = 0;
         offImageView.alpha = 1.0;
 		self.onLabel.alpha = 0;

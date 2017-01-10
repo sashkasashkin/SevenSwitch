@@ -95,6 +95,13 @@ typedef NS_ENUM(NSInteger, SevenSwitchDirection)
 
 
 /*
+ *  Sets the imageview that shows on the switch thumb. More priority than thumbImage, onThumbImage
+ */
+@property (nonatomic, strong) UIImageView *offThumbImageView;
+@property (nonatomic, strong) UIImageView *onThumbImageView;
+
+
+/*
  *	Sets the image that shows when the switch is on.
  *  The image is centered in the area not covered by the knob.
  *  Make sure to size your images appropriately.
