@@ -1,31 +1,15 @@
-{
-  "name": "SevenSwitch",
-  "version": "2.1.0",
-  "summary": "iOS7 style drop in replacement for UISwitch.",
-  "homepage": "https://github.com/bvogelzang/SevenSwitch",
-  "screenshots": [
-    "https://raw.github.com/bvogelzang/SevenSwitch/master/ExampleImages/example.gif",
-    "https://raw.github.com/bvogelzang/SevenSwitch/master/ExampleImages/example.png"
-  ],
-  "license": {
-    "type": "MIT",
-    "file": "LICENSE"
-  },
-  "authors": {
-    "Ben Vogelzang": "ben.vogelzang@veracross.com"
-  },
-  "source": {
-    "git": "https://github.com/bvogelzang/SevenSwitch.git",
-    "tag": "2.1.0"
-  },
-  "platforms": {
-    "ios": "8.0"
-  },
-  "source_files": "SevenSwitch.swift",
-  "exclude_files": "Classes/Exclude",
-  "frameworks": [
-    "UIKit",
-    "QuartzCore"
-  ],
-  "requires_arc": true
-}
+Pod::Spec.new do |s|
+  s.name         = "SevenSwitch"
+  s.version      = "1.4.0"
+  s.summary      = "iOS7 style drop in replacement for UISwitch."
+  s.homepage     = "https://github.com/bvogelzang/SevenSwitch"
+  s.screenshots  = "https://raw.github.com/bvogelzang/SevenSwitch/master/ExampleImages/example.gif", "https://raw.github.com/bvogelzang/SevenSwitch/master/ExampleImages/example.png"
+  s.license      = { :type => 'MIT', :file => 'LICENSE' }
+  s.author       = { "Ben Vogelzang" => "ben.vogelzang@veracross.com" }
+  s.source       = { :git => "https://github.com/bvogelzang/SevenSwitch.git", :tag => s.version.to_s }
+  s.platform     = :ios, '5.0'
+  s.source_files = 'SevenSwitch.{h,m}'
+  s.exclude_files = 'Classes/Exclude'
+  s.frameworks  = 'UIKit', 'QuartzCore'
+  s.requires_arc = true
+ +end
