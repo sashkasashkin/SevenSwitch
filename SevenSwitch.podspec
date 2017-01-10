@@ -12,4 +12,4 @@ Pod::Spec.new do |s|
   s.exclude_files = 'Classes/Exclude'
   s.frameworks  = 'UIKit', 'QuartzCore'
   s.requires_arc = true
- +end
+end
