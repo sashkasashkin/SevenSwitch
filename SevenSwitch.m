@@ -35,6 +35,7 @@
     BOOL startTrackingValue;
     BOOL didChangeWhileTracking;
     BOOL isAnimating;
+    BOOL isTrackingWithTouch;
     BOOL userDidSpecifyOnThumbTintColor;
     BOOL userDidSpecifyOnThumbImage;
 }
@@ -95,7 +96,7 @@
  *	Setup the individual elements of the switch and set default values
  */
 - (void)setup {
-
+    
     // default values
     self.direction = SevenSwitchDirection_Horizontal;
     self.on = NO;
@@ -110,7 +111,7 @@
     currentVisualValue = NO;
     userDidSpecifyOnThumbTintColor = NO;
     userDidSpecifyOnThumbImage = NO;
-
+    
     // background
     background = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
     background.backgroundColor = [UIColor clearColor];
@@ -118,33 +119,33 @@
     background.layer.borderColor = self.borderColor.CGColor;
     background.layer.borderWidth = 1.0;
     background.userInteractionEnabled = NO;
-	background.clipsToBounds = YES;
+    background.clipsToBounds = YES;
     [self addSubview:background];
-
+    
     // on/off images
     onImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
     onImageView.alpha = 0;
     onImageView.contentMode = UIViewContentModeCenter;
     [background addSubview:onImageView];
-
+    
     offImageView = [[UIImageView alloc] initWithFrame:CGRectMake(self.frame.size.height, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
     offImageView.alpha = 1.0;
     offImageView.contentMode = UIViewContentModeCenter;
     [background addSubview:offImageView];
-	
+    
     // labels
-	self.onLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
-	self.onLabel.textAlignment = NSTextAlignmentCenter;
+    self.onLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    self.onLabel.textAlignment = NSTextAlignmentCenter;
     self.onLabel.textColor = [UIColor lightGrayColor];
     self.onLabel.font = [UIFont systemFontOfSize:12];
     [background addSubview:self.onLabel];
-
-	self.offLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.frame.size.height, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
+    
+    self.offLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.frame.size.height, 0, self.frame.size.width - self.frame.size.height, self.frame.size.height)];
     self.offLabel.textAlignment = NSTextAlignmentCenter;
     self.offLabel.textColor = [UIColor lightGrayColor];
     self.offLabel.font = [UIFont systemFontOfSize:12];
     [background addSubview:self.offLabel];
-	
+    
     // knob
     knob = [[UIView alloc] initWithFrame:CGRectMake(1, 1, self.frame.size.height - 2, self.frame.size.height - 2)];
     knob.backgroundColor = self.thumbTintColor;
@@ -163,8 +164,9 @@
     thumbImageView.contentMode = UIViewContentModeScaleAspectFit;
     thumbImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [knob addSubview:thumbImageView];
-
+    
     isAnimating = NO;
+    isTrackingWithTouch = NO;
 }
 
 
@@ -172,10 +174,11 @@
 
 - (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
     [super beginTrackingWithTouch:touch withEvent:event];
-
+    
     startTrackingValue = self.on;
     didChangeWhileTracking = NO;
-
+    
+    isTrackingWithTouch = YES;
     // make the knob larger and animate to the correct color
     CGFloat activeKnobStretchSide;
     if (self.isHorizontal)
@@ -218,16 +221,16 @@
     } completion:^(BOOL finished) {
         isAnimating = NO;
     }];
-
+    
     return YES;
 }
 
 - (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
     [super continueTrackingWithTouch:touch withEvent:event];
-
+    
     // Get touch location
     CGPoint lastPoint = [touch locationInView:self];
-
+    
     // update the switch to the correct visuals depending on if
     // they moved their touch to the right or left side of the switch
     if (self.isHorizontal)
@@ -260,29 +263,31 @@
             }
         }
     }
-
+    
     return YES;
 }
 
 - (void)endTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
     [super endTrackingWithTouch:touch withEvent:event];
-
+    
     BOOL previousValue = self.on;
     
+    isTrackingWithTouch = NO;
     if (didChangeWhileTracking) {
         [self setOn:currentVisualValue animated:YES];
     }
     else {
         [self setOn:!self.on animated:YES];
     }
-
+    
     if (previousValue != self.on)
         [self sendActionsForControlEvents:UIControlEventValueChanged];
 }
 
 - (void)cancelTrackingWithEvent:(UIEvent *)event {
     [super cancelTrackingWithEvent:event];
-
+    
+    isTrackingWithTouch = NO;
     // just animate back to the original value
     if (self.on)
         [self showOn:YES];
@@ -293,10 +298,10 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-
-    if (!isAnimating) {
+    
+    if (!isAnimating && !isTrackingWithTouch) {
         CGRect frame = self.frame;
-
+        
         // background
         background.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
         if (self.isHorizontal)
@@ -325,7 +330,7 @@
             [self.offLabel setFrame:CGRectMake(frame.size.height, 0, frame.size.width - frame.size.height, frame.size.height)];
         else
             [self.offLabel setFrame:CGRectMake(0, 0, frame.size.width, frame.size.height - frame.size.width)];
-       
+        
         if (self.isHorizontal)
         {
             if (self.on)
@@ -510,13 +515,13 @@
  */
 - (void)setIsRounded:(BOOL)rounded {
     isRounded = rounded;
-
+    
     if (rounded) {
         if (self.isHorizontal)
             background.layer.cornerRadius = self.frame.size.height * 0.5;
         else
             background.layer.cornerRadius = self.frame.size.width * 0.5;
-
+        
         if (self.isHorizontal)
             knob.layer.cornerRadius = self.frame.size.height * 0.5 - 1;
         else
@@ -544,7 +549,7 @@
  */
 - (void)setOn:(BOOL)isOn animated:(BOOL)animated {
     on = isOn;
-
+    
     if (isOn) {
         [self showOn:animated];
     }
@@ -609,8 +614,8 @@
                 thumbImageView.image = self.onThumbImage;
             onImageView.alpha = 1.0;
             offImageView.alpha = 0;
-			self.onLabel.alpha = 1.0;
-			self.offLabel.alpha = 0;
+            self.onLabel.alpha = 1.0;
+            self.offLabel.alpha = 0;
         } completion:^(BOOL finished) {
             isAnimating = NO;
         }];
@@ -642,8 +647,8 @@
             thumbImageView.image = self.onThumbImage;
         onImageView.alpha = 1.0;
         offImageView.alpha = 0;
-		self.onLabel.alpha = 1.0;
-		self.offLabel.alpha = 0;
+        self.onLabel.alpha = 1.0;
+        self.offLabel.alpha = 0;
     }
     
     currentVisualValue = YES;
@@ -689,8 +694,8 @@
                 thumbImageView.image = self.thumbImage;
             onImageView.alpha = 0;
             offImageView.alpha = 1.0;
-			self.onLabel.alpha = 0;
-			self.offLabel.alpha = 1.0;
+            self.onLabel.alpha = 0;
+            self.offLabel.alpha = 1.0;
         } completion:^(BOOL finished) {
             isAnimating = NO;
         }];
@@ -721,8 +726,8 @@
             thumbImageView.image = self.thumbImage;
         onImageView.alpha = 0;
         offImageView.alpha = 1.0;
-		self.onLabel.alpha = 0;
-		self.offLabel.alpha = 1.0;
+        self.onLabel.alpha = 0;
+        self.offLabel.alpha = 1.0;
     }
     
     currentVisualValue = NO;
